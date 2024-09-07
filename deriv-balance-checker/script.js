@@ -1,47 +1,35 @@
-const appId = 63379;  // Deriv App ID
-const redirectUri = window.location.href.split('?')[0];  // Current URL without query parameters
-
-document.getElementById('authorize').addEventListener('click', () => {
-    const authUrl = `https://oauth.deriv.com/oauth2/authorize?app_id=${appId}&l=EN&brand=deriv&redirect_uri=${redirectUri}`;
-    window.location.href = authUrl;
+document.getElementById('authorize-button').addEventListener('click', function() {
+    // Redirect to Deriv OAuth authorization page
+    window.location.href = 'https://api.deriv.com/oauth2/authorize?response_type=token&client_id=YOUR_CLIENT_ID&redirect_uri=https://tonnierich.github.io/deriv-balance-checker/';
 });
 
-const urlParams = new URLSearchParams(window.location.search);
-const token = urlParams.get('token');
-
-if (token) {
-    fetchBalance(token);
+// Function to extract the access token from the URL fragment
+function getAccessToken() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    return params.get('access_token');
 }
 
-function fetchBalance(apiToken) {
-    const ws = new WebSocket(`wss://frontend.binaryws.com/websockets/v3?app_id=${appId}`);
-
-    ws.onopen = () => {
-        console.log('Connected to the Deriv WebSocket API');
-        ws.send(JSON.stringify({ "authorize": apiToken }));
-    };
-
-    ws.onmessage = (message) => {
-        const data = JSON.parse(message.data);
-
-        if (data.msg_type === 'authorize') {
-            console.log('Authorization successful');
-            ws.send(JSON.stringify({ "balance": 1 }));
-        }
-
-        if (data.msg_type === 'balance') {
-            const balance = data.balance;
-            document.getElementById('balance').textContent = `Balance: ${balance.balance} ${balance.currency}`;
-            document.getElementById('account-type').textContent = `Account Type: ${balance.type}`;
-        }
-
-        if (data.error) {
-            console.error('Error:', data.error.message);
-            document.getElementById('balance').textContent = `Error: ${data.error.message}`;
-        }
-    };
-
-    ws.onclose = () => {
-        console.log('Disconnected from the Deriv WebSocket API');
-    };
+// Function to fetch and display balance information
+function fetchBalance() {
+    const accessToken = getAccessToken();
+    if (accessToken) {
+        fetch('https://api.deriv.com/api/v1/account/balance', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('balance').innerText = `Balance: $${data.balance}`;
+        })
+        .catch(error => console.error('Error fetching balance:', error));
+    }
 }
+
+// Fetch and display balance on page load if access token is present
+window.onload = function() {
+    fetchBalance();
+};
