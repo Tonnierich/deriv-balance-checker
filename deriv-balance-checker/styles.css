@@ -1,15 +1,22 @@
 body {
     font-family: Arial, sans-serif;
-    padding: 20px;
-    max-width: 600px;
-    margin: auto;
+    text-align: center;
+    margin: 0;
+    padding: 0;
 }
-#balance, #account-type {
+
+h1 {
     margin-top: 20px;
-    font-size: 18px;
 }
-button {
+
+#authorize-button {
+    margin: 20px;
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
+}
+
+#balance-info {
+    margin-top: 20px;
+    font-size: 18px;
 }
